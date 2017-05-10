@@ -1,0 +1,172 @@
+<% layout('../layout') -%>
+<% script('https://maps.googleapis.com/maps/api/js?key=AIzaSyCLHhCca9KsloU7q42sKKRyjo9Dg3dShIU&sensor=true') -%>
+<style type="text/css">
+    html { height: 100% }
+    body { height: 100%; margin: 0; padding: 0 }
+    #map_canvas { height: 100% }
+</style>
+
+<div data-role="page" id="fare">
+		<div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" data-direction="reverse" class="ui-btn-left" data-icon="back" data-ajax="false">Back</a>
+       	<h3>
+				Nearby Fares: <%= req.docs.length  %>
+				</h3>
+				<a data-role="button" href="/" class="ui-btn-right" data-icon="home" data-ajax="false"> Home </a>
+		</div>
+
+    <div data-role="content">
+
+			<div id="map_canvas" style="width:100%; height:100%">
+					<div id="LoadingMap">Loading Map Location.. </div>
+			</div>
+
+			<div class="actions"> </div>
+    </div>
+</div>
+
+<script>
+
+var fares = <%- JSON.stringify(req.docs) %>;
+
+$(function () {
+  var sock = window.sock;
+/*
+  sock.on('fare cancelled', function (msg) {
+    console.log('passenger position updated', msg);
+  });
+
+  sock.on('driver position updated', function (msg) {
+    console.log('driver position updated', msg);
+  });
+  */
+
+  sock.on('driver position updated', function (msg) {
+    if (!driver) return;
+    var pos = msg.content();
+    driver.setPosition(new google.maps.LatLng(pos.lat, pos.long));
+  });
+
+  sock.on('passenger position updated', function (msg) {
+    var actor = msg.actor(), pos = msg.content();
+    for (var k in getMarker.markers) {
+      if (markers[k].user === actor) {
+        markers[k].setPosition(new google.maps.LatLng(pos.lat, pos.long));
+        break;
+      }
+    }
+  });
+
+  sock._callbacks['fare created'] = [];
+  sock._callbacks['passenger cancelled fare'] = [];
+  sock._callbacks['driver cancelled fare'] = [];
+
+  sock.on('fare created', function (msg) {
+    try { getMarker(msg.content()); }
+    catch(e) { console.error(e); }
+  });
+
+  sock.on('driver cancelled fare', function (msg) {
+    try { getMarker(msg.content()); }
+    catch(e) { console.error(e); }
+  });
+
+  sock.on('passenger cancelled fare', function (msg) {
+    try { getMarker(msg.content()).remove(); }
+    catch(e) { console.error(e); }
+  });
+
+  sock.on('fare accepted', function (msg) {
+    try { getMarker(msg.content()).remove(); }
+    catch(e) { console.error(e); }
+  });
+
+  var el = $('#map_canvas');
+  var map = new google.maps.Map(el.get(0), { zoom: 6, center: new google.maps.LatLng(), mapTypeId: google.maps.MapTypeId.ROADMAP });
+  var bounds = new google.maps.LatLngBounds();
+
+  $(window).resize(function () {
+    el.css({height:$(window).height()*.9});
+    google.maps.event.trigger(map, 'resize');
+  //  map.setZoom(map.getZoom());
+  });
+
+  $(window).resize();
+
+  var driver, driverPoint;
+  navigator.geolocation.watchPosition(function (pos) {
+    if (!driver) {
+      driverPoint = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+      driver = new google.maps.Marker({
+          position: driverPoint,
+          title: 'driver',
+          icon: {
+            url: "/img/Taxi-icon.png",
+            size: new google.maps.Size(48,48),
+            origin: new google.maps.Point(0,0),
+            anchor: new google.maps.Point(0,0)
+          },
+          zIndex: 1
+      });
+      driver.setMap(map);
+    }
+    map.setCenter(driverPoint);
+    bounds.extend(driverPoint);
+    map.fitBounds(bounds);
+  });
+
+  $.each(fares, function (i, fare) {
+    getMarker(fare);
+  });
+
+  function getMarker (fare) {
+    var markers = {};
+    getMarker = function (fare) {
+      console.log(fare);
+      var type = typeof fare;
+      if ('string' === type) return markers[fare];
+      if ('object' !== type) return;
+      if (!markers[fare._id]) {
+        var point = new google.maps.LatLng(fare.loc[1], fare.loc[0]);
+        var marker = new google.maps.Marker({
+          position: point,
+          title:'passenger',
+          icon: {
+            url: "/img/person_level1-icon.png",
+            size: new google.maps.Size(64,64),
+            origin: new google.maps.Point(0,0),
+            anchor: new google.maps.Point(0,0)
+          },
+          zIndex: 2
+        });
+        console.log('addListener');
+        google.maps.event.addListener(marker, 'click', function () {
+          notificationPopup('Would you like to accept this fare?', '/fare/'+fare._id+'/accept', 'Accept');
+        });
+        marker.setMap(map);
+        bounds.extend(point);
+        markers[fare._id] = {
+          fare: fare,
+          point: point,
+          marker: marker,
+          remove: function () {
+            this.marker.setMap(null);
+            delete markers[this.fare._id];
+            markers[this.fare._id] = undefined;
+          }
+        };
+      }
+      return markers[fare._id]; 
+    };
+    getMarker.markers = markers;
+    return getMarker(fare);
+  }
+
+  var listener = google.maps.event.addListener(map, "idle", function () { 
+    if (map.getZoom() > 16) map.setZoom(16); 
+    try { google.maps.event.removeListener(listener); } catch (e) { console.log(e); }
+  });
+
+});
+
+</script>

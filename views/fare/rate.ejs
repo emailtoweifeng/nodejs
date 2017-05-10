@@ -1,0 +1,31 @@
+<% layout('../layout') -%>
+
+<div data-role="page" id="fare">
+		<div data-theme="a" data-role="header">
+        <a data-role="button" data-direction="reverse" data-rel="back" class="ui-btn-left" data-icon="back" data-ajax="false">Back</a>
+				<h3>
+					Rate Driver
+				</h3>
+        <a href="/" data-role="button" class="ui-btn-right" data-icon="home" data-ajax="false">Home</a>
+		</div>
+    <div data-role="content" class="text-center">
+        <h1 class="text-center">Rate Driver?</h1>
+				<h3>Select your satisfication overall</h3>
+        <form id="rate" action="/fare/<%= req.fare.id %>/rate" method="POST" data-ajax="false">
+          <input type="hidden" value="0" name="rating" />
+          <a data-role="button" data-theme="e" class="ui-btn-inline ui-btn-icon-left" data-icon="star" name="star" value="1" data-ajax="false">1</a>
+          <a data-role="button" data-theme="e" class="ui-btn-inline ui-btn-icon-left" data-icon="star" name="star" value="2" data-ajax="false">2</a>
+          <a data-role="button" data-theme="e" class="ui-btn-inline ui-btn-icon-left" data-icon="star" name="star" value="3" data-ajax="false">3</a>
+          <a data-role="button" data-theme="e" class="ui-btn-inline ui-btn-icon-left" data-icon="star" name="star" value="4" data-ajax="false">4</a>
+          <a data-role="button" data-theme="e" class="ui-btn-inline ui-btn-icon-left" data-icon="star" name="star" value="5" data-ajax="false">5</a>
+        </form>
+        <script>
+        $('a[name="star"]').click(function (event) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          $('input[name="rating"]').val($(this).attr('value'));
+          $('form#rate').submit();
+        });
+        </script>
+    </div>
+</div>

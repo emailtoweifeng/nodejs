@@ -1,0 +1,442 @@
+<% layout('../layout') -%>
+<% script('https://maps.googleapis.com/maps/api/js?key=AIzaSyCLHhCca9KsloU7q42sKKRyjo9Dg3dShIU&sensor=true') -%>
+<style type="text/css">
+    html { height: 100% }
+    body { height: 100%; margin: 0; padding: 0 }
+    #map_canvas { height: 100% }
+</style>
+
+<div data-role="page" id="fare">
+		<div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" data-direction="reverse" class="ui-btn-left" data-icon="back" data-ajax="false">Back</a>
+       	<h3>
+				<% if (!req.fare.driver) { %>
+				Nearby Taxis: <%= req.fare.numberofdrivers  %>
+				<% } else { %>
+				My Fare
+				<% } %>
+				</h3>
+				<a data-role="button" href="/" class="ui-btn-right" data-icon="home" data-ajax="false"> Home </a>
+		</div>
+
+<% if (req.fare.approved || req.fare.creator.id === req.user.id) { %>
+    <div data-role="content">
+
+			<div id="map_canvas" style="width:100%; height:100%">
+					<div id="LoadingMap">Loading Map Location.. </div>
+			</div>
+
+			<div class="taxi-info">
+				<% if (req.user.id == req.fare.creator.id) { %>
+						<% if (req.fare.driver) { %>
+						<div class="license">
+							<%= req.fare.driver.taxi.license %>
+						</div>
+							<% if (req.fare.driver.imgSource) { %>	
+						<img src="/image/<%= req.fare.driver.imgSource %>" />
+							<% } %>
+						<% } %>
+				<% } %>
+			</div>
+
+			<div class="actions">
+
+			<% if (!req.fare.driver && req.user_objects.driver && req.user.id != req.fare.creator.id) { %>
+				<a data-role="button" href="/fare/<%= req.fare.id %>/accept" data-ajax="false">Accept</a>
+			<% } %>
+
+			<% if (req.user_objects.driver && req.fare.driver && req.user_objects.driver.id == req.fare.driver.id) { %>
+				<a data-role="button" id="action-call" href="tel:<%= req.fare.creator.phone %>" data-ajax="false">Call</a>	
+				<a style="display:none" data-role="button" id="action-dropoff" href="/fare/<%= req.fare.id %>/dropoff" data-ajax="false">drop off</a>	
+				<a style="display:none" data-role="button" id="action-pickup" href="/fare/<%= req.fare.id %>/pickup" data-ajax="false">pick up</a>
+			<% } %>
+
+			<% if ((req.user_objects.driver && req.fare.driver && req.user_objects.driver.id == req.fare.driver.id) || (req.fare.creator.id == req.user.id)) { %>
+				<a data-role="button" href="/fare/<%= req.fare.id %>/cancel" data-ajax="false" >Cancel</a>
+			<% } %>
+
+			</div>
+    </div>
+</div>
+
+<script>
+
+var main = window.main = function () {
+
+	sock.on('passenger position updated', function (msg) {
+		console.log('passenger position updated', msg);
+		if (passenger) {
+			passenger.setPosition( new google.maps.LatLng(msg.content().lat, msg.content().long) );
+			if (driver) {
+				getDirections();
+			}
+		}
+		if (msg.content().within) {
+			if (!fare.passengers.length) {
+				$('#action-pickup').show();	
+				$('#action-dropoff').hide();
+			}
+			else {
+				$('#action-pickup').hide();
+				$('#action-dropoff').show();
+			}
+		}
+		else {
+			$('#action-pickup').hide();
+			$('#action-dropoff').hide();
+		}
+	});
+	sock.on('driver position updated', function (msg) {
+    if ('object' !== typeof msg) {
+      console.warn('msg is not an object');
+      return;
+    }
+		console.log('driver position updated', msg);
+		if (driver) {
+			driver.setPosition( new google.maps.LatLng(msg.content().lat, msg.content().long) );
+			if (passenger) {
+				getDirections();
+			}
+		}
+		if (msg.content().within) {
+			if (!fare.passengers.length) {
+				$('#action-pickup').show();	
+				$('#action-dropoff').hide();
+			}
+			else {
+				$('#action-pickup').hide();
+				$('#action-dropoff').show();
+			}
+		}
+		else {
+			$('#action-pickup').hide();
+			$('#action-dropoff').hide();
+		}
+	});
+	sock.on('fare accepted', function (msg) {
+    console.log('fare accepted', msg);
+		if (sdid === msg.actor()) return;
+		handleFare(msg.content());
+	});
+	sock.on('picked up passenger', function (msg) {
+		console.log('picked up passenger', msg);
+		handleFare(msg.content());
+	});
+	sock.on('dropped off passenger', function (msg) {
+		console.log('dropped off passenger', msg);
+		handleFare(msg.content());
+	});
+
+	var fare = main.fare = <%- JSON.stringify( req.fare ) %>;
+
+	var passenger
+		, driver;
+
+	var el = main.el = $('#map_canvas');
+	el.css({height:$(window).height()*.60});
+
+	var map = main.map = new google.maps.Map(el.get(0), { zoom: 10, center: new google.maps.LatLng(fare.creator.loc[1], fare.creator.loc[0]), mapTypeId: google.maps.MapTypeId.ROADMAP });
+
+	$(window).resize(function () {
+		el.css({height:$(window).height()*.60});
+		google.maps.event.trigger(map, 'resize');
+		map.setZoom(map.getZoom());
+	});
+	
+	var bounds = main.bounds = new google.maps.LatLngBounds();
+
+	var passengerPoint = main.passengerPoint = new google.maps.LatLng(fare.creator.loc[1], fare.creator.loc[0]);
+	console.log('passengerPoint', passengerPoint);
+
+	var passenger = main.passenger = new google.maps.Marker({
+			position: passengerPoint,
+			title: 'passenger',
+			icon: {
+				url: "/img/person_level1-icon.png",
+				size: new google.maps.Size(48,48),
+				origin: new google.maps.Point(0,0),
+				anchor: new google.maps.Point(0,0)
+			},
+			zIndex: 3
+	});
+
+	passenger.setMap(map);
+
+	bounds.extend(passengerPoint);
+
+	var directionsService = main.directionsService = new google.maps.DirectionsService()
+		, directionsDisplay = main.directionsDisplay = new google.maps.DirectionsRenderer({suppressMarkers:true, preserveViewport: true});
+
+	directionsDisplay.setMap(map);
+	
+	function getDriver(fare) {
+		if (!fare.driver || !fare.driver.loc || !fare.driver.loc.length) return;
+		var driverPoint = new google.maps.LatLng(fare.driver.loc[1], fare.driver.loc[0]);
+		console.log('driverPoint', driverPoint);
+
+		$('.taxi-info .license').each(function () {
+			$(this).html('<h3>Taxi License: '+ (fare.taxi ? (fare.taxi.license) : 'unknown')+'</h3>');
+			$(this).show();
+		});
+
+		var driver = new google.maps.Marker({
+				position: driverPoint,
+				title: 'passenger',
+				icon: {
+					url: "/img/Taxi-icon.png",
+					size: new google.maps.Size(48,48),
+					origin: new google.maps.Point(0,0),
+					anchor: new google.maps.Point(0,0)
+				},
+				zIndex: 3
+		});
+    
+    console.log('the FARE', fare);
+    if (fare.driver.user != fare.creator._id && !fare.approved) {
+      google.maps.event.addListener(driver, 'click', function () {
+        confirmDriver(fare, function (accepted) {
+          if (!accepted) {
+            try {
+              driver.setMap(null);
+            } catch(e) { console.error(e); }
+            driver = main.driver = null;
+          }
+        });
+      });
+    }
+
+		driver.setMap(map);
+		
+		bounds.extend(driverPoint);
+
+		getDirections();
+
+		return driver;
+	}
+
+	main.lastRequest = null;
+	main.gettingDirections = false;
+
+	function getDirections () { 
+
+		if (!driver) return;
+
+		if (main.gettingDirections) return;
+
+		var request = { origin: driver.position, destination: passenger.position,  travelMode: google.maps.TravelMode.DRIVING };
+
+		if (main.lastRequest) {
+			if ((Math.abs(main.lastRequest.origin.nb - request.origin.nb) < 0.000001) &&
+					(Math.abs(main.lastRequest.origin.ob - request.origin.ob) < 0.000001) &&
+					(Math.abs(main.lastRequest.destination.nb - request.destination.nb) < 0.000001) &&
+					(Math.abs(main.lastRequest.destination.ob - request.destination.ob) < 0.000001)) {
+				return;
+			}
+		}
+
+		main.gettingDirections = false;
+		
+		directionsService.route(request, function (result, status) {
+			if (status == google.maps.DirectionsStatus.OK) {
+				directionsDisplay.setDirections(result);
+				main.lastRequest = request;
+				main.bounds = new google.maps.LatLngBounds();
+				bounds.extend(driver.position);
+				bounds.extend(passenger.position);
+				map.fitBounds(bounds);
+			}
+			main.gettingDirections = false;
+		});
+
+	}
+
+	if (fare.driver) driver = main.driver = getDriver(fare);
+
+	function notify () {
+	/*
+		var self = this, args = Array.prototype.slice.call(arguments);
+		if (window.webkitNotifications) {
+			var fn;
+			try {
+				fn = window.webkitNotifications.createNotification.apply(window.webkitNotifications, args);//(arguments[0], arguments[1], arguments[2]);
+			}
+			catch (e) {
+				alert(e);
+			}
+			finally {
+				if (!fn) {
+					fn = { show: function() {
+						alert.apply(self, args.reverse());
+					} };
+				}
+			}
+			return fn;
+		}
+		else {
+			//TODO do an html notification here
+			return { show: function() {
+				alert.apply(self, args.reverse());
+			} };
+		}
+	*/
+		return (function (image, title, msg, action, actionText, click, method) {
+			if (click === undefined) { click = function () { $('#notification-popup').popup('close'); return false }; }
+			return {
+				show: function () {
+					notificationPopup(msg, action || '/', actionText || 'Ok', click, method);	
+				}
+			};
+		}).apply(this, Array.prototype.slice.call(arguments));
+	}
+
+	if (window.webkitNotifications) {
+		console.log('Notifications are supported!');
+		if (window.webkitNotifications.checkPermission() != 0) window.webkitNotifications.requestPermission();
+	} else {
+		console.log('Notifications are not supported!');
+	}
+	
+	var createExpiredNotificationInstance = function (options) {
+		return notify(
+			'/img/safedrop-nobg.png',
+			'FARE EXPIRED',
+			'The fare expired you may created another one...',
+			'/fare/create',
+			'Create Fare',
+			null,
+			'post'
+		);
+	};
+
+	var createPassCancelNotificationInstance = function (options) {
+		return notify(
+			'/img/safedrop-nobg.png',
+			'PASSENGER CANCELLED',
+			'The passenger cancelled the fare and we are taking you back to the queue...',
+			'/fare/queue',
+			'Queue',
+			null,
+			'get'
+		);
+	};
+
+	var createDriverCancelNotificationInstance = function (options) {
+		return notify(
+			'/img/safedrop-nobg.png',
+			'DRIVER CANCELLED',
+			'The driver cancelled and your fare is back in the queue...',
+			window.location.href
+		);
+	};
+
+	var createDriverAcceptanceNotificationInstance = function (options) {
+		return notify(
+			'/img/safedrop-nobg.png',
+			'DRIVER ACCEPTANCE',
+			'A driver just accepted your fare...',
+			window.location.href
+		)
+	};
+
+	var pickupConfirmationAsked = false, dropoffConfirmationAsked = false;
+
+	handleFare(fare);
+
+	map.fitBounds(bounds);
+
+	function handleFare (fare) {
+
+		//console.log('fare', fare);
+		if (fare.status == 'done') {
+			if (fare.creator != sdid) {							
+				
+				//window.location.href='/user';
+			}
+			return;
+		}
+
+		if (fare.expired) {
+			createExpiredNotificationInstance({notificationType:'simple'}).show();
+			window.location.href="/user";
+			return;
+		}
+
+		if (fare.deleted) {
+			createPassCancelNotificationInstance({notificationType:'simple'}).show();
+			//notify('The passenger cancelled the fare and we are taking you back to the queue.');
+			window.location.href="/fare/queue";
+			return;
+		}
+
+		if (fare.driver) {
+			if (!driver) {
+				driver = main.driver = getDriver(fare);
+				//createDriverAcceptanceNotificationInstance({notificationType:'simple'}).show();
+				//notify('A driver just accepted your fare.');
+				confirmDriver(fare, function (accepted) {
+          if (!accepted) {
+            try {
+              main.driver.setMap(null);
+            } catch(e) { console.error(e); }
+            driver = main.driver = null;
+          }
+        });
+			}
+			else {
+				driver.setPosition( new google.maps.LatLng(fare.driver.loc[1], fare.driver.loc[0]) );
+			}
+		}
+		else if (!fare.driver) {
+			if (driver) {
+				createDriverCancelNotificationInstance({notificationType:'simple'}).show();
+				//notify('The driver cancelled and your fare is back in the queue.');
+				driver.setMap(null);
+				driver = main.driver = null;
+				directionsDisplay.setMap(null);
+				$('.taxi .license').hide();
+			}
+		}
+
+		if (fare.withinProximity && !fare.passengers.length) {
+			$('#action-pickup').show();	
+		}
+		else {
+			$('#action-pickup').hide();
+		}
+
+		if (fare.passengers && fare.passengers.length) {
+			$('#action-dropoff').show();
+		}
+		else {
+			$('#action-dropoff').hide();
+		}
+	
+		passenger.setPosition( new google.maps.LatLng(fare.creator.loc[1], fare.creator.loc[0]) );
+
+		getDirections();
+
+	}
+
+  var listener = google.maps.event.addListener(map, "idle", function () { 
+    if (map.getZoom() > 16) map.setZoom(16); 
+    try { google.maps.event.removeListener(listener); } catch(e) { console.log(e); }
+  });
+
+};
+
+$(function () {
+	main();
+});
+
+</script>
+
+<% } else { %>
+	<div data-role="content">
+		<h2 class="text-center">The passenger has not accepted you as their driver yet.</h2>
+		<h3 class="text-center">Please wait a moment for the user to respond</h3>
+		<form action="/fare/<%= req.fare.id %>/request" method="post" data-ajax="false">
+			<button data-theme="b" type="submit" >Request Approval</button>
+		</form>
+		<a data-role="button" data-ajax="false" href="/fare/<%= req.fare.id %>/cancel">Get new Fare</a>
+	</div>
+<% } %>

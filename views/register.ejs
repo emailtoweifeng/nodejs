@@ -1,0 +1,57 @@
+<% layout('layout') -%>
+
+<form method="POST" name="/register" data-ajax="false" onsubmit="return validate(this);">
+		<% if (req.query.d || req.session.d) { %>
+		<input type="hidden" name="d" value="<%= encodeURI(req.query.d || req.session.d) %>" />
+		<% } %>
+    <div data-role="page">
+        <div data-theme="a" data-role="header">
+            <a data-role="button" data-rel="back" data-direction="reverse" data-ajax="false" class="ui-btn-left" data-icon="back">Back</a>
+	        <h3>Register</h3>
+           <a data-role="button" href="/" data-ajax="false" class="ui-btn-right" data-icon="home">Home</a>
+        </div>
+
+        <div data-role="content">
+        <div id="form_error">
+<%
+// Display validation errors on the registration form.
+if(typeof errors !== 'undefined' && errors.length) {
+    errors.forEach(function(err) {
+%>
+            <p><%= err %></p>
+<%
+    });
+}
+
+// Create the registration form.
+%>
+        </div>
+        <fieldset data-role="controlgroup" data-mini="true">
+            <div style="display:none">
+                <label for="name[first]">Name *</label>
+                <input type="text" name="name[first]" id="name[first]" placeholder="First Name" value="<%= req.param('first_name') || '' %>" data-required-field="false" />
+                <input type="text" name="name[last]" id="name[last]" placeholder="Last Name" value="<%= req.param('last_name') || '' %>" data-required-field="false" />
+            </div>
+            <div>
+                <label for="phone">Phone Number *</label>
+                <input name="phone" id="phone" placeholder="555-555-5555" value="<%= req.param('phone') || '' %>" type="tel" data-required-field="true" />
+            </div>
+            <div>
+                <label for="password">Password *</label>
+                <input name="password" id="password" placeholder="Type Password" type="password" data-required-field="true" data-confirm-field="password_two"/>
+                <input name="password_two" id="password_two" placeholder="Retype Password" type="password" data-required-field="true"i data-confirm-field="password" />
+            </div>
+            <div>
+                <label for="pin">Pin *</label>
+                <input name="pin" id="pin" placeholder="Type Pin" type="number" data-required-field="true" data-confirm-field="pin" maxlength="4"/>
+            </div>
+        </fieldset>
+        <fieldset data-role="controlgroup" data-mini="true" style="display:none">
+            <div>
+                <label for="email">Email</label>
+                <input name="email" id="email" placeholder="JonSmith@gmail.com" type="email" />
+            </div>
+        </fieldset>
+        <button type="submit" data-theme="b" data-ajax="false">Register</button>
+    </div>
+</form>

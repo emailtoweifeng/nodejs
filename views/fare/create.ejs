@@ -1,0 +1,67 @@
+<% layout('../layout') -%>
+<div data-role="page" id="Login">
+	<div data-theme="a" data-role="header">
+			<a data-role="button" class="ui-btn-left" data-ajax="false" data-direction="reverse" data-icon="delete" data-rel="back">Cancel</a>
+			<h3> Fare	</h3>
+			<a style="display:none" data-role="button" href="#" id="retry" class="ui-btn-right" data-ajax="false" data-icon="refresh">Retry</a>
+	</div>
+	<div data-role="content">
+		<h1 id="status">Getting Location...</h1>
+		<form id="create-fare" style="display:none" action="/fare" method="POST" data-ajax="false">
+			<fieldset style="display:none">
+			Long <input type="text" name="loc[long]" value="" id="long" />
+			<br />
+			lat <input type="text" name="loc[lat]" value="" id="lat" />
+			<br />
+			</fieldset>
+			<button type="submit" >Create</button>
+		</form>
+  </div>
+
+<script type="text/javascript">
+	(function () {
+
+		var s = $('#status');
+
+		$('#retry').click(function () {
+			window.location.reload();
+		});
+		
+		$('#status').html('Getting Location...');
+
+		function getLocation (info) {
+			if (!info || !info.coords) {
+				return errored('Error: Position is unavailable!');
+			}
+			console.log('coord');
+			s.html('Coordinates received...');
+			$('#long').val(info.coords.longitude);
+			$('#lat').val(info.coords.latitude);
+			<% if (req.query.confirm && req.query.confirm == 1) { %>
+			$('#create-fare').show();		
+			<% } else { %>
+			s.html('Creating fare...');
+			$('#create-fare').submit();
+			<% } %>
+		}
+
+		function errored () {
+			$('#retry').show();
+		}
+
+		$(function () {
+			navigator.geolocation.getCurrentPosition(getLocation, function (err) {
+				if (err) {
+					if (err.code == 1) {
+						s.html('Error: Access is denied!<br>You must allow GPS in your location settings.');
+					}
+					else if (err.code == 2) {
+						s.html('Error: Position is unavailable!<br>');
+					}
+					errored()
+				}
+			}); // Asks the user for their GPS
+		});
+
+	})();
+</script>

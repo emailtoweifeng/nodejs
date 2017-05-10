@@ -1,0 +1,46 @@
+<% layout('../layout') -%>
+
+<!-- Profile -->
+<div data-role="page" id="passenger_profile">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" data-direction="reverse" class="ui-btn-left" data-icon="back" data-ajax="false">Back</a>
+        <h3>
+<% if (req.user.id == req.target.id) { %> My Profile <% } else { %> Profile <% } %>
+        </h3>
+        <a data-role="button" href="/" data-direction="reverse" class="ui-btn-right" data-icon="back">Home</a>
+    </div>
+    <div data-role="content">
+			<% if (!req.target_objects.driver || 1) { %>
+				<% if (req.target_objects.fare) { %>
+					<a data-role="button" data-theme="b" href="/fare" data-ajax="false">
+						<% if (req.user.id == req.target.id) { %> My <% } %> Current Fare 
+					</a>
+				<% } else {%>
+					<% if (req.user.id == req.target.id) { %>
+					<a data-role="button" data-theme="b" href="/fare" data-ajax="false">
+						Pick Me Up
+					</a>
+					<% } %>
+				<% } %>
+			<% } %>
+			<% if (!req.target_objects.driver && req.target.id == req.user.id) { %>
+				<a data-role="button" href="/driver/register" data-ajax="false">
+					Taxi Driver Registrtion
+				</a>
+			<% } %>
+
+				<% try { %>
+				<% if (req.target_objects && req.target_objects.driver) { %>
+				<% if (req.target_objects.driver_objects.fare) { %>
+				<a data-role="button" data-theme="b" data-ajax="false" href="/fare/<%= req.target_objects.driver_objects.fare.id  %>"><% if (req.target.id == req.user.id ) { %> My <% } %>Accepted Fare</a>
+				<% } else { %>
+				<a data-role="button" data-theme="b" href="/fare/queue" data-ajax="false">Get Fare</a>
+				<% } %>
+				<a style="display:none"data-role="button" data-ajax="false" data-theme="c" href="/driver/<%= req.target_objects.driver.id  %>">Driver Settings</a>
+				<% } %>
+				<% } catch(e) { %><!-- <%= JSON.stringify(e,null,2) %> --><% } %>
+        <a data-role="button" href="/logout" data-ajax="false">Logout</a>
+    </div>
+
+</div>
+

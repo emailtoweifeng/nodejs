@@ -1,0 +1,43 @@
+<% layout('layout') -%>
+
+<form method="POST" name="/confirmation" data-ajax="false" onsubmit="return validate(this);">
+		<% if (req.query.d || req.session.d) { %>
+		<input type="hidden" name="d" value="<%= encodeURIComponent(req.query.d || req.session.d) %>" />
+		<% } %>
+    <div data-role="page">
+        <div data-theme="a" data-role="header">
+            <a data-role="button" data-rel="back" data-ajax="false" class="ui-btn-left" data-icon="back">Back</a>
+	        <h3>Confirm Registration</h3>
+        </div>
+
+        <div data-role="content">
+        <div id="form_error">
+<%
+// Display validation errors on the registration form.
+if(typeof errors !== 'undefined' && errors.length) {
+    errors.forEach(function(err) {
+%>
+            <p><%= err %></p>
+<%
+    });
+}
+else {
+%>
+<h4>You will receive a message with your code shortly</h4>
+<%
+}
+
+// Create the registration form.
+%>
+        </div>
+        <fieldset data-role="controlgroup" data-mini="true">
+            <div>
+                <label for="phone">Code *</label>
+                <input name="code" id="code" placeholder="000000" value="" type="number" data-required-field="true" />
+            </div>
+        </fieldset>
+        <button type="submit" data-theme="b" data-ajax="false">Confirm Registration</button>
+				<a href="/confirmation/code?d=<%= encodeURIComponent(req.param('d')) %>" data-role="button" data-ajax="false">Get Code</a>
+				</div>
+    </div>
+</form>

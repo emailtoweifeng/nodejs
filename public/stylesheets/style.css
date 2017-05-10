@@ -1,0 +1,69 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+a {
+  color: #00B7FF;
+}
+.inline{
+    display: inline;
+}
+.inline-block{
+    display: inline-block;
+}
+.block{
+    display: block;
+}
+.left{
+    float: left;
+}
+.right{
+    float: right;
+}
+#map_canvas { height: 100% }
+
+
+
+/** Utility Classes ***/
+.photoWrapper{
+    border: 1px solid #c1c1c1;
+    width: 75px;
+    height: 75px;
+    background: white;
+    padding: 3px;
+    margin-right: 5px;
+    border-radius: 3px;
+}
+.photoWrapper img{
+    width: 75px;
+    height: 75px;
+}
+
+/** Registration Forms **/
+.requiredField {
+    bow-shadow: 5px 5px 5px black;
+    box-shadow: 0 0 15px red;
+}
+
+#form_error {
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 24px;
+    text-align: center;
+}
+
+/** jQuery Mobile Re-style **/
+/* Slightly reduce the size of the header to reclaim more screen real-estate */
+h1, h2, h3 {
+    line-height: 30px !important;
+}
+
+/* Body Element creates scrollbar on registration pages */
+.ui-mobile, .ui-mobile body {
+    height: inherit !important;
+}
+
+/* Inputs on the registration forms should be displayed below the label */
+.ui-input-text {
+    display: block !important;
+}

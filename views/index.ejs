@@ -1,0 +1,57 @@
+<% layout('layout') -%>
+<% var is_driver = req.user && req.user_objects && req.user_objects.driver %>
+
+<!-- Home -->
+<div data-role="page" id="SplashPage">
+    <div data-role="content">
+        <div class="center">
+            <img style="width: 288px; height: 100px" src="/img/safedrop-nobg.png" />
+        </div>
+    <% if (req.user) { %>
+    <% if (req.user_objects && req.user_objects.fare) { %>
+      <a data-role="button" data-theme="b" href="/fare" data-ajax="false">
+        My Fare 
+      </a>
+    <% } else {%>
+      <a data-role="button" data-theme="b" href="/fare" data-ajax="false">
+        Pick Me Up
+      </a>
+    <% } %>
+    <% if (req.user_objects && !req.user_objects.driver) { %>
+      <a data-role="button" href="/driver/register" data-ajax="false">
+        Taxi Driver Registrtion
+      </a>
+    <% } %>
+    <% } %>
+
+		<% if (is_driver) { %>
+		<% if (req.user_objects.driver_objects && req.user_objects.driver_objects.fare) { %>
+				<a data-role="button" data-theme="a" data-ajax="false"  href="/fare/<%= req.user_objects.driver_objects.fare.id %>">
+					Current Fare 
+				</a>
+		<% } else { %>
+        <a data-role="button" data-theme="a" data-ajax="false" href="/fare/queue">
+          Find Fare 
+        </a>
+		<% } %>
+		<% } %>
+
+	  <% if (!req.user) { %>
+        <a data-role="button" data-theme="b" href="/login?d=/fare" data-ajax="false">
+            Pick Me Up
+        </a>
+        <a data-role="button" href="/login" data-ajax="false">
+            Login
+        </a>
+        <a data-role="button" href="/register" data-ajax="false">
+            Register
+        </a>
+        <a data-role="button" href="/register?d=/driver/register" data-ajax="false">
+            Driver Registration
+        </a>
+				<% } else { %>
+				<a data-role="button" href="/logout" data-ajax="false">
+					Logout	
+				</a>
+		<% } %>
+    </div>

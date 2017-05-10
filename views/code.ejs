@@ -1,0 +1,56 @@
+<% layout('layout') -%>
+
+<form method="POST" name="/code" data-ajax="false" onsubmit="return validate(this);">
+		<% if (req.query.d || req.session.d) { %>
+		<input type="hidden" name="d" value="<%= encodeURI(req.query.d || req.session.d) %>" />
+		<% } %>
+    <div data-role="page">
+        <div data-theme="a" data-role="header">
+            <a data-role="button" data-direction="reverse" data-rel="back" data-ajax="false" class="ui-btn-left" data-icon="back">Back</a>
+	        <h3>Register</h3>
+        </div>
+
+        <div data-role="content">
+        <div id="form_error">
+<%
+// Display validation errors on the registration form.
+if(typeof errors !== 'undefined' && errors.length) {
+    errors.forEach(function(err) {
+%>
+            <p><%= err %></p>
+<%
+    });
+}
+else {
+%>
+<h4>You will receive a text message with your code shortly</h4>
+<%
+}
+
+// Create the registration form.
+%>
+        </div>
+        <fieldset data-role="controlgroup" data-mini="true">
+            <div>
+                <label for="phone">Phone Number *</label>
+                <input name="phone" id="phone" placeholder="555-555-5555" value="<%= req.param('phone') || '' %>" type="tel" data-required-field="true" />
+            </div>
+            <div>
+                <label for="phone">Code *</label>
+                <input name="code" id="code" placeholder="000000" value="<%= req.param('code') || '' %>" type="number" data-required-field="true" />
+            </div>
+            <div>
+                <label for="password">Password *</label>
+                <input name="password" id="password" placeholder="Type Password" type="password" data-required-field="true" data-confirm-field="password_two"/>
+                <input name="password_two" id="password_two" placeholder="Retype Password" type="password" data-required-field="true"i data-confirm-field="password" />
+            </div>
+            <div>
+                <label for="pin">Pin *</label>
+                <input name="pin" id="pin" placeholder="Type Pin" type="number" data-required-field="true" data-confirm-field="pin" maxlength="4"/>
+            </div>
+        </fieldset>
+        <button type="submit" data-theme="b" data-ajax="false">Update Password</button>
+				<a href="/reset?phone=<%= req.param('phone') %>" data-role="button" data-ajax="false">Get Code</a>
+				</div>
+    </div>
+</form>

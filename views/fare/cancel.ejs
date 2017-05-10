@@ -1,0 +1,18 @@
+<% layout('../layout') -%>
+
+<div data-role="page" id="fare">
+		<div data-theme="a" data-role="header">
+        <a data-role="button" data-rel="back" data-direction="reverse" class="ui-btn-left" data-icon="back" data-ajax="false">Back</a>
+				<h3>
+					Cancel Fare
+				</h3>
+				<a data-role="button" href="/" class="ui-btn-right" data-icon="home" data-ajax="false">Home</a>
+		</div>
+    <div data-role="content">
+        <h1 class="text-center">Cancel Fare?</h1>
+        <form action="/fare/<%= req.fare.id %>/cancel" method="POST" data-ajax="false">
+            <button data-theme="b" type="submit">Yes</button>
+        </form>
+        <a data-role="button" data-rel="back" data-direction="reverse" data-ajax="false">No</a>
+    </div>
+</div>

@@ -1,0 +1,36 @@
+<% layout('../layout') -%>
+<style>
+	#status { text-align: center; }
+	#controls { display:none }
+</style>
+<div data-role="page" id="Login">
+	<div data-theme="a" data-role="header">
+			<a data-role="button" class="ui-btn-left ui-icon-back" data-ajax="false" data-rel="back" data-icon="delete" data-direction="reverse">
+					Cancel
+			</a>
+			<h3>
+				Pickup Passenger 
+			</h3>
+			<a style="display:none" data-role="button" href="#" id="retry" class="ui-btn-right" data-ajax="false" data-icon="refresh"> Retry </a>
+	</div>
+	<div data-role="content">
+		<h1 id="status">Getting location...</h2>
+			<form id="pickup" action="/fare/<%= req.fare.id %>/pickup" method="POST" data-ajax="false">
+			<input type="hidden" name="loc[long]" value="" />
+			<input type="hidden" name="loc[lat]" value="" />
+			<div id="controls">
+				<button type="submit">Pick up</button>
+			</div>
+		</form>
+  	</div>
+	<script>
+function getLocation(location){
+	$('#status').html('Coordinates received...');
+	$("[name='loc[long]']").val(location.coords.longitude);
+	$("[name='loc[lat]']").val(location.coords.latitude);
+	$('#pickup').submit();
+	$('#status').html('Picking up...');
+}
+navigator.geolocation.getCurrentPosition(getLocation); // Asks the user for their GPS
+	</script>
+</div>

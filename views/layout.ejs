@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-stale" content="black" />
+        <link rel='apple-touch-icon' sizes="72x72" href="/img/72x72.png" />
+        <link rel='apple-touch-icon' sizes='114x114' href="/img/114x114.png" />
+        <link rel='apple-touch-startup-image' href='/startup.png'>
+
+        <title>My Safe Drop - Taxi</title>
+
+        <!-- CSS -->
+        <% stylesheet('//code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css') -%>
+        <% stylesheet('/stylesheets/style.css') -%>
+        <%-stylesheets%> <!-- Puts all CSS Includes here -->
+
+        <!-- JAVASCRIPT -->
+        <% script('//code.jquery.com/jquery-1.9.1.min.js') -%>
+        <% script('//code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js') -%>
+				<% script('/bus.io/bus.io.js') -%>
+        <% script('/js/site.js') -%>
+        <%-scripts%> <!-- Puts all JS includes here -->
+
+    </head>
+    <body>
+			<% if (req && req.user) { %>
+        <script>sdid = "<%= req.user.id %>";</script>
+        <% script('/js/sock.js') -%>
+        <div style="display:none">
+          <div data-role="popup" id="notification-popup" class="ui-content" data-history="false">
+            <a href="#" data-theme="a" data-role="button" data-rel="back" data-icon="delete" data-iconpos="notext" class="ui-btn-right">&times;</a>
+            <p></p>
+            <form action="" method="post" data-ajax="false">
+              <button data-mini="true" data-role="button" data-theme="b" data-inline="true" data-ajax="false" type="submit">Accept</button>
+            </form>
+          </div>
+          <div data-role="popup" id="confirm-popup" class="ui-content" data-history="false">
+            <a href="#" data-theme="a" data-role="button" data-rel="back" data-icon="delete" data-iconpos="notext" class="ui-btn-right">&times;</a>
+            <p></p>
+            <span class="a" data-inline="true" style="display:inline">
+              <button data-mini="true" data-role="button" data-inline="true" data-ajax="false" class="a">Cancel</button>
+            </span>
+            <span class="b" data-inline="true" style="display:inline">
+              <button data-mini="true" data-role="button" data-inline="true" data-ajax="false" data-theme="b" class="b">OK</button>
+            </span>
+          </div>
+          <div data-role="popup" id="confirm-popup-pin" class="ui-content" data-history="false">
+            <a href="#" data-theme="a" data-role="button" data-rel="back" data-icon="delete" data-iconpos="notext" class="ui-btn-right">&times;</a>
+            <p></p>
+            Enter Pin: <input type="number" id="cpin" value="" />
+            <span class="a" data-inline="true" style="display:inline">
+              <button data-mini="true" data-role="button" data-inline="true" data-ajax="false" class="a">Cancel</button>
+            </span>
+            <span class="b" data-inline="true" style="display:inline">
+              <button data-mini="true" data-role="button" data-inline="true" data-ajax="false" data-theme="b" class="b">OK</button>
+            </span>
+          </div>
+        </div>
+      <% } %>
+    	<%-body -%>
+    </body>
+</html>

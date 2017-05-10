@@ -1,0 +1,41 @@
+<% layout('../layout') -%>
+<form method="POST" name="/driver/register" data-ajax="false" onsubmit="return validate(this);">
+    <div data-role="page">
+        <div data-theme="a" data-role="header">
+            <a data-role="button" data-rel="back" data-ajax="false" class="ui-btn-left" data-icon="back" data-direction="reverse">Back</a>
+	        <h3>Register</h3>
+            <a data-role="button" href="/" data-ajax="false" class="ui-btn-right" data-icon="home">Home</a>
+        </div>
+
+        <div data-role="content">
+        <div id="form_error">
+<%
+// Display validation errors on the registration form.
+if(typeof errors !== 'undefined' && errors.length) {
+    errors.forEach(function(err) {
+%>
+            <p><%= err %></p>
+<%
+    });
+}
+
+// Create the registration form.
+%>
+        </div>
+        <fieldset data-role="controlgroup" data-mini="true">
+					<div> 
+						<label for="picture">Picture</label>
+						<input type="file" name="image" value="" />
+					</div>
+            <div>
+                <label for="license">Driver's License Number *</label>
+                <input name="license" id="license" value="<%= req.param('license') || '' %>" data-required-field="true" />
+            </div>
+            <div>
+                <label for="taxi[license]">Taxi License Plate Number *</label>
+                <input type="text" name="taxi[license]" id="taxi[license]" placeholder="" value="<%= req.param('taxi_license') || '' %>" data-required-field="true" />
+            </div>
+        </fieldset>
+        <button type="submit" data-ajax="false" data-theme="b">Register</button>
+    </div>
+</form>

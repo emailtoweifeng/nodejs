@@ -1,0 +1,43 @@
+<% layout('layout') -%>
+
+<!-- Login -->
+<div data-role="page" id="Login">
+    <div data-theme="a" data-role="header">
+        <a data-role="button" data-direction="reverse" class="ui-btn-left" data-icon="back" data-ajax="false" data-rel="back">Back</a>
+        <h3>
+					Login
+        </h3>
+           <a data-role="button" href="/" data-ajax="false" class="ui-btn-right" data-icon="home">Home</a>
+    </div>
+    <div data-role="content">
+        <div id="form_error">
+<%
+// Display validation errors on the login form.
+if(typeof errors !== 'undefined' && errors.length) {
+    errors.forEach(function(err) {
+%>
+            <p><%= err %></p>
+<%
+    });
+}
+
+%>
+        </div>
+        <form id="login_form" method="POST" action="/reset" data-ajax="false">
+            <div data-role="fieldcontain">
+                <fieldset data-role="controlgroup" data-mini="true">
+                    <label for="phone">
+                    	Phone 
+                    </label>
+                    <input name="phone" id="phone" placeholder="555-555-5555" value="<%= req.param('phone') || '' %>" type="tel"/>
+                </fieldset>
+            </div>
+
+            <button type="submit" data-theme="b" data-ajax="false">Get Code</button>
+					
+					<% if (req.query.d || req.session.d) { %>
+					<input type="hidden" name="d" value="<%= encodeURI(req.query.d || req.session.d) %>" />
+					<% } %>
+        </form>
+    </div>
+</div>
